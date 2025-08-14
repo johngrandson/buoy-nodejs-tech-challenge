@@ -13,23 +13,23 @@ async function registerSwagger() {
     swagger: {
       info: {
         title: 'Accommodation Booking API',
-        version: '1.0.0'
-      }
-    }
+        version: '1.0.0',
+      },
+    },
   });
   await server.register(swaggerUi, {
     routePrefix: '/documentation',
     uiConfig: {
       docExpansion: 'none',
-      deepLinking: false
-    }
+      deepLinking: false,
+    },
   });
 }
 
 const start = async () => {
   try {
     // await 5 seconds before starting the server
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await registerSwagger();
 
     const orm = await MikroORM.init(mikroOrmConfig);
@@ -41,9 +41,9 @@ const start = async () => {
     server.register(accommodationRoutes, { prefix: '/accommodations' });
     server.register(bookingRoutes, { prefix: '/bookings' });
 
-    await server.listen({ 
+    await server.listen({
       port: Number(process.env.PORT) || 8006,
-      host: '0.0.0.0' 
+      host: '0.0.0.0',
     });
   } catch (err) {
     server.log.error(err);
