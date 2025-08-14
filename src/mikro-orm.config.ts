@@ -15,8 +15,8 @@ const mikroOrmConfig: Options<PostgreSqlDriver> = {
   metadataProvider: TsMorphMetadataProvider,
   migrations: {
     path: './src/migrations',
-    disableForeignKeys: false
-  }
+    disableForeignKeys: false,
+  },
 };
 
 export default mikroOrmConfig;
