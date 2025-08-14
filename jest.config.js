@@ -14,6 +14,9 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@entities/(.*)$': '<rootDir>/src/entities/$1',
     '^@routes/(.*)$': '<rootDir>/src/routes/$1',
-    '^@test-helpers/(.*)$': '<rootDir>/__tests__/helpers/$1',
+    '^@schemas/(.*)$': '<rootDir>/src/schemas/$1',
+    '^@migrations/(.*)$': '<rootDir>/src/migrations/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@types/(.*)$': '<rootDir>/src/types/$1',
   },
 };
