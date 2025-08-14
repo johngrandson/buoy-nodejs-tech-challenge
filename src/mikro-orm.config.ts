@@ -3,9 +3,11 @@ import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { TsMorphMetadataProvider } from '@mikro-orm/reflection';
 import { Accommodation } from './entities/accommodation.entity';
 import { Booking } from './entities/booking.entity';
+import { Hotel } from './entities/hotel.entity';
+import { Apartment } from './entities/apartment.entity';
 
 const mikroOrmConfig: Options<PostgreSqlDriver> = {
-  entities: [Accommodation, Booking],
+  entities: [Accommodation, Booking, Hotel, Apartment],
   dbName: process.env.DB_NAME || 'accommodation_booking',
   type: 'postgresql',
   host: process.env.DB_HOST || 'localhost',
