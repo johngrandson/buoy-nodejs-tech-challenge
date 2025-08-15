@@ -99,6 +99,74 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
       }
     }
   );
+
+  fastify.put<{ Params: typeof BookingParamsSchema._type; Body: BookingInput }>(
+    '/:id',
+    {
+      schema: {
+        description: 'Update booking by ID',
+        tags: ['Bookings'],
+        params: fromZodSchema(BookingParamsSchema),
+        body: BookingJsonSchema,
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id } = BookingParamsSchema.parse(request.params);
+        const data = BookingSchema.parse(request.body);
+        
+        const booking = await fastify.em.findOne(Booking, { id }, { populate: ['accommodation'] });
+        
+        if (!booking) {
+          return reply.status(404).send({ message: 'Booking not found' });
+        }
+
+        // Check if accommodation exists if updating accommodationId
+        const accommodation = await fastify.em.findOne(Accommodation, { id: data.accommodationId });
+        if (!accommodation) {
+          return reply.status(400).send({ message: 'Invalid accommodation ID' });
+        }
+        
+        fastify.em.assign(booking, {
+          ...data,
+          accommodation,
+          startDate: new Date(data.startDate),
+          endDate: new Date(data.endDate),
+        });
+        await fastify.em.persistAndFlush(booking);
+        
+        return booking;
+      } catch (error) {
+        return reply.status(400).send(error);
+      }
+    }
+  );
+
+  fastify.delete(
+    '/:id',
+    {
+      schema: {
+        description: 'Delete booking by ID',
+        tags: ['Bookings'],
+        params: fromZodSchema(BookingParamsSchema),
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id } = BookingParamsSchema.parse(request.params);
+        const booking = await fastify.em.findOne(Booking, { id });
+        
+        if (!booking) {
+          return reply.status(404).send({ message: 'Booking not found' });
+        }
+        
+        await fastify.em.removeAndFlush(booking);
+        return reply.status(204).send();
+      } catch (error) {
+        return reply.status(400).send(error);
+      }
+    }
+  );
 };
 
 export default bookingRoutes;
