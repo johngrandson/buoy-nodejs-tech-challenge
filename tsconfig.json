@@ -17,7 +17,8 @@
       "@schemas/*": ["src/schemas/*"],
       "@migrations/*": ["src/migrations/*"],
       "@config/*": ["src/config/*"],
-      "@types/*": ["src/types/*"]
+      "@types/*": ["src/types/*"],
+      "@services/*": ["src/services/*"]
     },
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
