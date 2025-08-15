@@ -213,7 +213,7 @@ describe('Booking Routes', () => {
 
       (app.em.findOne as jest.Mock)
         .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
-        .mockResolvedValueOnce({ id: 1, name: 'Test Hotel', numberOfRooms: 3 }) // hotel lookup
+        .mockResolvedValueOnce({ id: 1, type: 'hotel', name: 'Test Hotel', numberOfRooms: 3 }) // accommodation type lookup
         .mockResolvedValueOnce({ id: 1, name: 'Test Hotel', numberOfRooms: 3 }); // hotel lookup for strategy
 
       (app.em.find as jest.Mock).mockResolvedValue([]); // no existing bookings
@@ -286,8 +286,7 @@ describe('Booking Routes', () => {
 
       (app.em.findOne as jest.Mock)
         .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
-        .mockResolvedValueOnce(null) // hotel lookup (not found)
-        .mockResolvedValueOnce({ id: 1, name: 'Test Apartment' }); // apartment lookup
+        .mockResolvedValueOnce({ id: 1, type: 'apartment', name: 'Test Apartment' }); // accommodation type lookup
 
       (app.em.find as jest.Mock).mockResolvedValue(existingBookings);
 
@@ -330,7 +329,7 @@ describe('Booking Routes', () => {
 
       (app.em.findOne as jest.Mock)
         .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
-        .mockResolvedValueOnce(mockHotel) // hotel lookup
+        .mockResolvedValueOnce({ id: 1, type: 'hotel', name: 'Test Hotel', numberOfRooms: 2 }) // accommodation type lookup
         .mockResolvedValueOnce(mockHotel); // hotel lookup for strategy
 
       (app.em.find as jest.Mock).mockResolvedValue(existingBookings);
@@ -376,7 +375,7 @@ describe('Booking Routes', () => {
 
       (app.em.findOne as jest.Mock)
         .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
-        .mockResolvedValueOnce(mockHotel) // hotel lookup
+        .mockResolvedValueOnce({ id: 1, type: 'hotel', name: 'Test Hotel', numberOfRooms: 3 }) // accommodation type lookup
         .mockResolvedValueOnce(mockHotel); // hotel lookup for strategy
 
       (app.em.find as jest.Mock).mockResolvedValue(existingBookings);
@@ -416,7 +415,7 @@ describe('Booking Routes', () => {
       (app.em.findOne as jest.Mock)
         .mockResolvedValueOnce(existingBooking) // booking lookup
         .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
-        .mockResolvedValueOnce({ id: 1, name: 'Test Hotel', numberOfRooms: 3 }) // hotel lookup
+        .mockResolvedValueOnce({ id: 1, type: 'hotel', name: 'Test Hotel', numberOfRooms: 3 }) // accommodation type lookup
         .mockResolvedValueOnce({ id: 1, name: 'Test Hotel', numberOfRooms: 3 }); // hotel lookup for strategy
 
       (app.em.find as jest.Mock).mockResolvedValue([]); // no conflicting bookings
@@ -535,8 +534,7 @@ describe('Booking Routes', () => {
       (app.em.findOne as jest.Mock)
         .mockResolvedValueOnce(existingBooking) // booking lookup
         .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
-        .mockResolvedValueOnce(null) // hotel lookup (not found)
-        .mockResolvedValueOnce({ id: 1, name: 'Test Apartment' }); // apartment lookup
+        .mockResolvedValueOnce({ id: 1, type: 'apartment', name: 'Test Apartment' }); // accommodation type lookup
 
       (app.em.find as jest.Mock).mockResolvedValue(conflictingBookings);
 
@@ -573,8 +571,7 @@ describe('Booking Routes', () => {
       (app.em.findOne as jest.Mock)
         .mockResolvedValueOnce(existingBooking) // booking lookup
         .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
-        .mockResolvedValueOnce(null) // hotel lookup (not found)
-        .mockResolvedValueOnce({ id: 1, name: 'Test Apartment' }); // apartment lookup
+        .mockResolvedValueOnce({ id: 1, type: 'apartment', name: 'Test Apartment' }); // accommodation type lookup
 
       (app.em.find as jest.Mock).mockResolvedValue([]); // no conflicting bookings after excluding current
       (app.em.assign as jest.Mock).mockImplementation((entity, data) =>

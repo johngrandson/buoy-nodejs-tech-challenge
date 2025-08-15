@@ -153,37 +153,30 @@ describe('BookingValidationService', () => {
 
   describe('determineAccommodationType', () => {
     it('should return hotel for hotel accommodation', async () => {
-      const hotel = { id: 1, name: 'Test Hotel' } as Hotel;
-      mockEm.findOne
-        .mockResolvedValueOnce(hotel) // First call for hotel
-        .mockResolvedValueOnce(null); // Second call for apartment
+      const hotel = { id: 1, type: 'hotel', name: 'Test Hotel' };
+      mockEm.findOne.mockResolvedValue(hotel);
 
       const result = await service.determineAccommodationType(1);
 
       expect(result).toBe('hotel');
-      expect(mockEm.findOne).toHaveBeenCalledWith(Hotel, { id: 1 });
+      expect(mockEm.findOne).toHaveBeenCalledWith(expect.anything(), { id: 1 });
     });
 
     it('should return apartment for apartment accommodation', async () => {
-      const apartment = { id: 1, name: 'Test Apartment' } as Apartment;
-      mockEm.findOne
-        .mockResolvedValueOnce(null) // First call for hotel
-        .mockResolvedValueOnce(apartment); // Second call for apartment
+      const apartment = { id: 1, type: 'apartment', name: 'Test Apartment' };
+      mockEm.findOne.mockResolvedValue(apartment);
 
       const result = await service.determineAccommodationType(1);
 
       expect(result).toBe('apartment');
-      expect(mockEm.findOne).toHaveBeenCalledWith(Hotel, { id: 1 });
-      expect(mockEm.findOne).toHaveBeenCalledWith(Apartment, { id: 1 });
+      expect(mockEm.findOne).toHaveBeenCalledWith(expect.anything(), { id: 1 });
     });
 
-    it('should throw error for unknown accommodation type', async () => {
-      mockEm.findOne
-        .mockResolvedValueOnce(null) // First call for hotel
-        .mockResolvedValueOnce(null); // Second call for apartment
+    it('should throw error for accommodation not found', async () => {
+      mockEm.findOne.mockResolvedValue(null);
 
       await expect(service.determineAccommodationType(999))
-        .rejects.toThrow('Accommodation not found or unsupported type');
+        .rejects.toThrow('Accommodation not found');
     });
   });
 
