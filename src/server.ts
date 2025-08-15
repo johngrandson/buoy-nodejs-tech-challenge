@@ -1,12 +1,12 @@
 import fastify from 'fastify';
 import { MikroORM } from '@mikro-orm/core';
 import mikroOrmConfig from './mikro-orm.config';
-import accommodationRoutes from './routes/accommodation.routes';
 import bookingRoutes from './routes/booking.routes';
 import hotelRoutes from './routes/hotel.routes';
 import apartmentRoutes from './routes/apartment.routes';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
+import cors from '@fastify/cors';
 import { env, getServerUrl, logConfiguration } from './config/env.config';
 
 const server = fastify({
@@ -40,7 +40,6 @@ async function registerSwagger() {
       consumes: ['application/json'],
       produces: ['application/json'],
       tags: [
-        { name: 'Accommodations', description: 'Accommodation management endpoints' },
         { name: 'Bookings', description: 'Booking management endpoints' },
         { name: 'Hotels', description: 'Hotel management endpoints' },
         { name: 'Apartments', description: 'Apartment management endpoints' },
@@ -67,6 +66,13 @@ const start = async () => {
     // await 1 second before starting the server
     await new Promise(resolve => setTimeout(resolve, 1000));
 
+    // Register CORS to allow access from any origin
+    await server.register(cors, {
+      origin: true, // Allow all origins
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    });
+
     await registerSwagger();
 
     const orm = await MikroORM.init(mikroOrmConfig);
@@ -78,7 +84,6 @@ const start = async () => {
     // Register routes with API prefix if configured
     const prefix = env.API_PREFIX === '/api/v1' ? '' : env.API_PREFIX;
 
-    server.register(accommodationRoutes, { prefix: `${prefix}/accommodations` });
     server.register(bookingRoutes, { prefix: `${prefix}/bookings` });
     server.register(hotelRoutes, { prefix: `${prefix}/hotels` });
     server.register(apartmentRoutes, { prefix: `${prefix}/apartments` });

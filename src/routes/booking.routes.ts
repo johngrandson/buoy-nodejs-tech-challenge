@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-import { Booking } from '../entities/booking.entity';
-import { Accommodation } from '../entities/accommodation.entity';
+import { Booking } from '@/entities/booking.entity';
+import { Accommodation } from '@/entities/accommodation.entity';
 import {
   BookingInput,
   BookingSchema,
@@ -8,6 +8,7 @@ import {
   BookingParamsSchema,
 } from '../schemas/booking.schema';
 import { PaginationQuerySchema, PaginationResponse } from '@schemas/pagination.schema';
+import { BookingValidationService } from '@/services/booking/booking-validation.service';
 import fromZodSchema from 'zod-to-json-schema';
 
 const bookingRoutes: FastifyPluginAsync = async fastify => {
@@ -24,11 +25,15 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
       const { page, limit } = PaginationQuerySchema.parse(request.query);
       const offset = (page - 1) * limit;
 
-      const [bookings, total] = await fastify.em.findAndCount(Booking, {}, {
-        limit,
-        offset,
-        populate: ['accommodation'],
-      });
+      const [bookings, total] = await fastify.em.findAndCount(
+        Booking,
+        {},
+        {
+          limit,
+          offset,
+          populate: ['accommodation'],
+        }
+      );
 
       const totalPages = Math.ceil(total / limit);
 
@@ -85,6 +90,25 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
           return reply.status(400).send({ message: 'Invalid accommodation ID' });
         }
 
+        // Validate booking using the strategy pattern
+        const validationService = new BookingValidationService(fastify.em);
+        const accommodationType = await validationService.determineAccommodationType(
+          data.accommodationId
+        );
+        const validation = await validationService.validateBooking(
+          data.accommodationId,
+          accommodationType,
+          new Date(data.startDate),
+          new Date(data.endDate)
+        );
+
+        if (!validation.allowed) {
+          return reply.status(409).send({
+            message: 'Booking conflict',
+            reason: validation.reason,
+          });
+        }
+
         const booking = fastify.em.create(Booking, {
           ...data,
           accommodation,
@@ -114,9 +138,9 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
       try {
         const { id } = BookingParamsSchema.parse(request.params);
         const data = BookingSchema.parse(request.body);
-        
+
         const booking = await fastify.em.findOne(Booking, { id }, { populate: ['accommodation'] });
-        
+
         if (!booking) {
           return reply.status(404).send({ message: 'Booking not found' });
         }
@@ -126,7 +150,27 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
         if (!accommodation) {
           return reply.status(400).send({ message: 'Invalid accommodation ID' });
         }
-        
+
+        // Validate booking update using the strategy pattern
+        const validationService = new BookingValidationService(fastify.em);
+        const accommodationType = await validationService.determineAccommodationType(
+          data.accommodationId
+        );
+        const validation = await validationService.validateBooking(
+          data.accommodationId,
+          accommodationType,
+          new Date(data.startDate),
+          new Date(data.endDate),
+          id // exclude current booking from overlap check
+        );
+
+        if (!validation.allowed) {
+          return reply.status(409).send({
+            message: 'Booking conflict',
+            reason: validation.reason,
+          });
+        }
+
         fastify.em.assign(booking, {
           ...data,
           accommodation,
@@ -134,7 +178,7 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
           endDate: new Date(data.endDate),
         });
         await fastify.em.persistAndFlush(booking);
-        
+
         return booking;
       } catch (error) {
         return reply.status(400).send(error);
@@ -155,11 +199,11 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
       try {
         const { id } = BookingParamsSchema.parse(request.params);
         const booking = await fastify.em.findOne(Booking, { id });
-        
+
         if (!booking) {
           return reply.status(404).send({ message: 'Booking not found' });
         }
-        
+
         await fastify.em.removeAndFlush(booking);
         return reply.status(204).send();
       } catch (error) {

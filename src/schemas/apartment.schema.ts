@@ -11,6 +11,7 @@ export const ApartmentSchema = z.object({
   floor: z.number().int().optional(),
   hasElevator: z.boolean().optional(),
   amenities: z.array(z.string()).optional(),
+  type: z.literal('apartment').optional(), // Will be set automatically
 });
 
 export const ApartmentParamsSchema = z.object({
