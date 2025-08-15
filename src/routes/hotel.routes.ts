@@ -1,19 +1,41 @@
 import { FastifyPluginAsync } from 'fastify';
 import { Hotel } from '@entities/hotel.entity';
 import { HotelSchema, HotelInput, HotelParamsSchema } from '@schemas/hotel.schema';
+import { PaginationQuerySchema, PaginationResponse } from '@schemas/pagination.schema';
 import fromZodSchema from 'zod-to-json-schema';
 
 const hotelRoutes: FastifyPluginAsync = async fastify => {
-  fastify.get(
+  fastify.get<{ Querystring: typeof PaginationQuerySchema._type }>(
     '/',
     {
       schema: {
-        description: 'Get all hotels',
+        description: 'Get all hotels with pagination',
         tags: ['Hotels'],
+        querystring: fromZodSchema(PaginationQuerySchema),
       },
     },
-    async () => {
-      return await fastify.em.find(Hotel, {});
+    async (request): Promise<PaginationResponse<Hotel>> => {
+      const { page, limit } = PaginationQuerySchema.parse(request.query);
+      const offset = (page - 1) * limit;
+
+      const [hotels, total] = await fastify.em.findAndCount(Hotel, {}, {
+        limit,
+        offset,
+      });
+
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: hotels,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      };
     }
   );
 

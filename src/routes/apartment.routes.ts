@@ -1,19 +1,41 @@
 import { FastifyPluginAsync } from 'fastify';
 import { Apartment } from '@entities/apartment.entity';
 import { ApartmentSchema, ApartmentInput, ApartmentParamsSchema } from '@schemas/apartment.schema';
+import { PaginationQuerySchema, PaginationResponse } from '@schemas/pagination.schema';
 import fromZodSchema from 'zod-to-json-schema';
 
 const apartmentRoutes: FastifyPluginAsync = async fastify => {
-  fastify.get(
+  fastify.get<{ Querystring: typeof PaginationQuerySchema._type }>(
     '/',
     {
       schema: {
-        description: 'Get all apartments',
+        description: 'Get all apartments with pagination',
         tags: ['Apartments'],
+        querystring: fromZodSchema(PaginationQuerySchema),
       },
     },
-    async () => {
-      return await fastify.em.find(Apartment, {});
+    async (request): Promise<PaginationResponse<Apartment>> => {
+      const { page, limit } = PaginationQuerySchema.parse(request.query);
+      const offset = (page - 1) * limit;
+
+      const [apartments, total] = await fastify.em.findAndCount(Apartment, {}, {
+        limit,
+        offset,
+      });
+
+      const totalPages = Math.ceil(total / limit);
+
+      return {
+        data: apartments,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1,
+        },
+      };
     }
   );
 
