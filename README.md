@@ -48,7 +48,10 @@ The frontend needs to, given an accommodation's `id` and a `date`, retrieve the 
 ### Question
 
 - How would you solve this problem?
+  - Implement type-aware availability checking with a while loop that increments dates daily until an available slot is found. Hotels check against room capacity while apartments require zero overlaps. The algorithm uses the same date overlap logic as booking validation (start < nextDay && end > requestedDate) for consistency.
+
 - What data or API would you provide to the frontend?
+  - GET /accommodations/:id/next-available-date?from=YYYY-MM-DD endpoint returning accommodation details, requested/next available dates, availability status, and conflicting booking information when the requested date is unavailable. This provides complete context for the frontend to display availability and suggest alternatives.
 
 ## TECH CONTEXT
 ### Stack
