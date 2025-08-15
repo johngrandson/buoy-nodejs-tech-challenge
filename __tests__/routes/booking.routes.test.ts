@@ -207,11 +207,16 @@ describe('Booking Routes', () => {
         id: 3,
         ...newBooking,
         accommodation: mockAccommodation,
-        startDate: '2024-03-01T00:00:00.000Z',
-        endDate: '2024-03-05T00:00:00.000Z',
+        startDate: '2024-03-01',
+        endDate: '2024-03-05',
       };
 
-      (app.em.findOne as jest.Mock).mockResolvedValue(mockAccommodation);
+      (app.em.findOne as jest.Mock)
+        .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
+        .mockResolvedValueOnce({ id: 1, name: 'Test Hotel', numberOfRooms: 3 }) // hotel lookup
+        .mockResolvedValueOnce({ id: 1, name: 'Test Hotel', numberOfRooms: 3 }); // hotel lookup for strategy
+
+      (app.em.find as jest.Mock).mockResolvedValue([]); // no existing bookings
       (app.em.create as jest.Mock).mockReturnValue(createdBooking);
       (app.em.persistAndFlush as jest.Mock).mockResolvedValue(undefined);
 
@@ -260,6 +265,133 @@ describe('Booking Routes', () => {
 
       expect(response.statusCode).toBe(400);
     });
+
+    it('should return 409 for apartment booking conflict', async () => {
+      const newBooking = {
+        accommodationId: 1,
+        startDate: '2024-03-01',
+        endDate: '2024-03-05',
+        guestName: 'Alice Johnson',
+      };
+
+      const mockAccommodation = { id: 1, name: 'Test Apartment' };
+      const existingBookings = [
+        {
+          id: 2,
+          startDate: new Date('2024-03-01'),
+          endDate: new Date('2024-03-05'),
+          accommodation: { id: 1 },
+        },
+      ];
+
+      (app.em.findOne as jest.Mock)
+        .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
+        .mockResolvedValueOnce(null) // hotel lookup (not found)
+        .mockResolvedValueOnce({ id: 1, name: 'Test Apartment' }); // apartment lookup
+
+      (app.em.find as jest.Mock).mockResolvedValue(existingBookings);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/bookings',
+        payload: newBooking,
+      });
+
+      expect(response.statusCode).toBe(409);
+      const responseBody = JSON.parse(response.body);
+      expect(responseBody.message).toBe('Booking conflict');
+      expect(responseBody.reason).toBe('Apartment is already booked for these dates');
+    });
+
+    it('should return 409 for hotel booking when all rooms are booked', async () => {
+      const newBooking = {
+        accommodationId: 1,
+        startDate: '2024-03-01',
+        endDate: '2024-03-05',
+        guestName: 'Alice Johnson',
+      };
+
+      const mockAccommodation = { id: 1, name: 'Test Hotel' };
+      const mockHotel = { id: 1, name: 'Test Hotel', numberOfRooms: 2 };
+      const existingBookings = [
+        {
+          id: 2,
+          startDate: new Date('2024-03-01'),
+          endDate: new Date('2024-03-05'),
+          accommodation: { id: 1 },
+        },
+        {
+          id: 3,
+          startDate: new Date('2024-03-01'),
+          endDate: new Date('2024-03-05'),
+          accommodation: { id: 1 },
+        },
+      ];
+
+      (app.em.findOne as jest.Mock)
+        .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
+        .mockResolvedValueOnce(mockHotel) // hotel lookup
+        .mockResolvedValueOnce(mockHotel); // hotel lookup for strategy
+
+      (app.em.find as jest.Mock).mockResolvedValue(existingBookings);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/bookings',
+        payload: newBooking,
+      });
+
+      expect(response.statusCode).toBe(409);
+      const responseBody = JSON.parse(response.body);
+      expect(responseBody.message).toBe('Booking conflict');
+      expect(responseBody.reason).toBe('All 2 rooms are booked for these dates');
+    });
+
+    it('should allow hotel booking when rooms are available', async () => {
+      const newBooking = {
+        accommodationId: 1,
+        startDate: '2024-03-01',
+        endDate: '2024-03-05',
+        guestName: 'Alice Johnson',
+      };
+
+      const mockAccommodation = { id: 1, name: 'Test Hotel' };
+      const mockHotel = { id: 1, name: 'Test Hotel', numberOfRooms: 3 };
+      const existingBookings = [
+        {
+          id: 2,
+          startDate: new Date('2024-03-01'),
+          endDate: new Date('2024-03-05'),
+          accommodation: { id: 1 },
+        },
+      ];
+
+      const createdBooking = {
+        id: 3,
+        ...newBooking,
+        accommodation: mockAccommodation,
+        startDate: '2024-03-01T00:00:00.000Z',
+        endDate: '2024-03-05T00:00:00.000Z',
+      };
+
+      (app.em.findOne as jest.Mock)
+        .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
+        .mockResolvedValueOnce(mockHotel) // hotel lookup
+        .mockResolvedValueOnce(mockHotel); // hotel lookup for strategy
+
+      (app.em.find as jest.Mock).mockResolvedValue(existingBookings);
+      (app.em.create as jest.Mock).mockReturnValue(createdBooking);
+      (app.em.persistAndFlush as jest.Mock).mockResolvedValue(undefined);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/bookings',
+        payload: newBooking,
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(JSON.parse(response.body)).toEqual(createdBooking);
+    });
   });
 
   describe('PUT /bookings/:id', () => {
@@ -282,10 +414,15 @@ describe('Booking Routes', () => {
       const mockAccommodation = { id: 1, name: 'Test Accommodation' };
 
       (app.em.findOne as jest.Mock)
-        .mockResolvedValueOnce(existingBooking) // First call for booking
-        .mockResolvedValueOnce(mockAccommodation); // Second call for accommodation
+        .mockResolvedValueOnce(existingBooking) // booking lookup
+        .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
+        .mockResolvedValueOnce({ id: 1, name: 'Test Hotel', numberOfRooms: 3 }) // hotel lookup
+        .mockResolvedValueOnce({ id: 1, name: 'Test Hotel', numberOfRooms: 3 }); // hotel lookup for strategy
 
-      (app.em.assign as jest.Mock).mockImplementation((entity, data) => Object.assign(entity, data));
+      (app.em.find as jest.Mock).mockResolvedValue([]); // no conflicting bookings
+      (app.em.assign as jest.Mock).mockImplementation((entity, data) =>
+        Object.assign(entity, data)
+      );
       (app.em.persistAndFlush as jest.Mock).mockResolvedValue(undefined);
 
       const response = await app.inject({
@@ -367,6 +504,95 @@ describe('Booking Routes', () => {
       });
 
       expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 409 for apartment update booking conflict', async () => {
+      const existingBooking = {
+        id: 1,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-01-05'),
+        guestName: 'John Doe',
+        accommodation: { id: 1, name: 'Test Apartment' },
+      };
+
+      const updateData = {
+        accommodationId: 1,
+        startDate: '2024-01-10',
+        endDate: '2024-01-15',
+        guestName: 'John Updated',
+      };
+
+      const mockAccommodation = { id: 1, name: 'Test Apartment' };
+      const conflictingBookings = [
+        {
+          id: 2,
+          startDate: new Date('2024-01-10'),
+          endDate: new Date('2024-01-15'),
+          accommodation: { id: 1 },
+        },
+      ];
+
+      (app.em.findOne as jest.Mock)
+        .mockResolvedValueOnce(existingBooking) // booking lookup
+        .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
+        .mockResolvedValueOnce(null) // hotel lookup (not found)
+        .mockResolvedValueOnce({ id: 1, name: 'Test Apartment' }); // apartment lookup
+
+      (app.em.find as jest.Mock).mockResolvedValue(conflictingBookings);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/bookings/1',
+        payload: updateData,
+      });
+
+      expect(response.statusCode).toBe(409);
+      const responseBody = JSON.parse(response.body);
+      expect(responseBody.message).toBe('Booking conflict');
+      expect(responseBody.reason).toBe('Apartment is already booked for these dates');
+    });
+
+    it('should allow apartment update when excluding current booking', async () => {
+      const existingBooking = {
+        id: 1,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2024-01-05'),
+        guestName: 'John Doe',
+        accommodation: { id: 1, name: 'Test Apartment' },
+      };
+
+      const updateData = {
+        accommodationId: 1,
+        startDate: '2024-01-10',
+        endDate: '2024-01-15',
+        guestName: 'John Updated',
+      };
+
+      const mockAccommodation = { id: 1, name: 'Test Apartment' };
+
+      (app.em.findOne as jest.Mock)
+        .mockResolvedValueOnce(existingBooking) // booking lookup
+        .mockResolvedValueOnce(mockAccommodation) // accommodation lookup
+        .mockResolvedValueOnce(null) // hotel lookup (not found)
+        .mockResolvedValueOnce({ id: 1, name: 'Test Apartment' }); // apartment lookup
+
+      (app.em.find as jest.Mock).mockResolvedValue([]); // no conflicting bookings after excluding current
+      (app.em.assign as jest.Mock).mockImplementation((entity, data) =>
+        Object.assign(entity, data)
+      );
+      (app.em.persistAndFlush as jest.Mock).mockResolvedValue(undefined);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/bookings/1',
+        payload: updateData,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(app.em.find).toHaveBeenCalledWith(expect.anything(), {
+        accommodation: { id: 1 },
+        id: { $ne: 1 },
+      });
     });
   });
 
