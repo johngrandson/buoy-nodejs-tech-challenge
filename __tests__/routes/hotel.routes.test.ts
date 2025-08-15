@@ -10,6 +10,7 @@ describe('Hotel Routes', () => {
     // Mock the entity manager
     const mockEm = {
       find: jest.fn(),
+      findAndCount: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
       persistAndFlush: jest.fn(),
@@ -25,7 +26,7 @@ describe('Hotel Routes', () => {
   });
 
   describe('GET /hotels', () => {
-    it('should return all hotels', async () => {
+    it('should return all hotels with default pagination', async () => {
       const mockHotels = [
         {
           id: 1,
@@ -45,7 +46,7 @@ describe('Hotel Routes', () => {
         },
       ];
 
-      (app.em.find as jest.Mock).mockResolvedValue(mockHotels);
+      (app.em.findAndCount as jest.Mock).mockResolvedValue([mockHotels, 2]);
 
       const response = await app.inject({
         method: 'GET',
@@ -53,7 +54,93 @@ describe('Hotel Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body)).toEqual(mockHotels);
+      const responseBody = JSON.parse(response.body);
+      expect(responseBody).toEqual({
+        data: mockHotels,
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      });
+    });
+
+    it('should return hotels with custom pagination parameters', async () => {
+      const mockHotels = [
+        {
+          id: 1,
+          name: 'Hotel 1',
+          price: 100,
+          location: 'City A',
+          numberOfRooms: 50,
+          starRating: 4,
+        },
+      ];
+
+      (app.em.findAndCount as jest.Mock).mockResolvedValue([mockHotels, 15]);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/hotels?page=2&limit=5',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const responseBody = JSON.parse(response.body);
+      expect(responseBody).toEqual({
+        data: mockHotels,
+        pagination: {
+          page: 2,
+          limit: 5,
+          total: 15,
+          totalPages: 3,
+          hasNext: true,
+          hasPrev: true,
+        },
+      });
+
+      expect(app.em.findAndCount).toHaveBeenCalledWith(
+        expect.anything(),
+        {},
+        {
+          limit: 5,
+          offset: 5,
+        }
+      );
+    });
+
+    it('should handle edge case with no hotels', async () => {
+      (app.em.findAndCount as jest.Mock).mockResolvedValue([[], 0]);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/hotels',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const responseBody = JSON.parse(response.body);
+      expect(responseBody).toEqual({
+        data: [],
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      });
+    });
+
+    it('should validate pagination parameters', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/hotels?page=0&limit=150',
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 

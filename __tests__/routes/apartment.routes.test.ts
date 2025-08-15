@@ -10,6 +10,7 @@ describe('Apartment Routes', () => {
     // Mock the entity manager
     const mockEm = {
       find: jest.fn(),
+      findAndCount: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
       persistAndFlush: jest.fn(),
@@ -25,7 +26,7 @@ describe('Apartment Routes', () => {
   });
 
   describe('GET /apartments', () => {
-    it('should return all apartments', async () => {
+    it('should return all apartments with default pagination', async () => {
       const mockApartments = [
         {
           id: 1,
@@ -47,7 +48,7 @@ describe('Apartment Routes', () => {
         },
       ];
 
-      (app.em.find as jest.Mock).mockResolvedValue(mockApartments);
+      (app.em.findAndCount as jest.Mock).mockResolvedValue([mockApartments, 2]);
 
       const response = await app.inject({
         method: 'GET',
@@ -55,7 +56,94 @@ describe('Apartment Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body)).toEqual(mockApartments);
+      const responseBody = JSON.parse(response.body);
+      expect(responseBody).toEqual({
+        data: mockApartments,
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      });
+    });
+
+    it('should return apartments with custom pagination parameters', async () => {
+      const mockApartments = [
+        {
+          id: 1,
+          name: 'Apartment 1',
+          price: 80,
+          location: 'District A',
+          numberOfBedrooms: 2,
+          numberOfBathrooms: 1,
+          squareMeters: 65,
+        },
+      ];
+
+      (app.em.findAndCount as jest.Mock).mockResolvedValue([mockApartments, 12]);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/apartments?page=3&limit=4',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const responseBody = JSON.parse(response.body);
+      expect(responseBody).toEqual({
+        data: mockApartments,
+        pagination: {
+          page: 3,
+          limit: 4,
+          total: 12,
+          totalPages: 3,
+          hasNext: false,
+          hasPrev: true,
+        },
+      });
+
+      expect(app.em.findAndCount).toHaveBeenCalledWith(
+        expect.anything(),
+        {},
+        {
+          limit: 4,
+          offset: 8,
+        }
+      );
+    });
+
+    it('should handle edge case with no apartments', async () => {
+      (app.em.findAndCount as jest.Mock).mockResolvedValue([[], 0]);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/apartments',
+      });
+
+      expect(response.statusCode).toBe(200);
+      const responseBody = JSON.parse(response.body);
+      expect(responseBody).toEqual({
+        data: [],
+        pagination: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      });
+    });
+
+    it('should validate pagination parameters', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/apartments?page=-1&limit=0',
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 
