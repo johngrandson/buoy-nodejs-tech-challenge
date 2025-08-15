@@ -80,6 +80,63 @@ const hotelRoutes: FastifyPluginAsync = async fastify => {
       }
     }
   );
+
+  fastify.put<{ Params: typeof HotelParamsSchema._type; Body: HotelInput }>(
+    '/:id',
+    {
+      schema: {
+        description: 'Update hotel by ID',
+        tags: ['Hotels'],
+        params: fromZodSchema(HotelParamsSchema),
+        body: fromZodSchema(HotelSchema),
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id } = HotelParamsSchema.parse(request.params);
+        const data = HotelSchema.parse(request.body);
+        
+        const hotel = await fastify.em.findOne(Hotel, { id });
+        
+        if (!hotel) {
+          return reply.status(404).send({ message: 'Hotel not found' });
+        }
+        
+        fastify.em.assign(hotel, data);
+        await fastify.em.persistAndFlush(hotel);
+        
+        return hotel;
+      } catch (error) {
+        return reply.status(400).send(error);
+      }
+    }
+  );
+
+  fastify.delete(
+    '/:id',
+    {
+      schema: {
+        description: 'Delete hotel by ID',
+        tags: ['Hotels'],
+        params: fromZodSchema(HotelParamsSchema),
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id } = HotelParamsSchema.parse(request.params);
+        const hotel = await fastify.em.findOne(Hotel, { id });
+        
+        if (!hotel) {
+          return reply.status(404).send({ message: 'Hotel not found' });
+        }
+        
+        await fastify.em.removeAndFlush(hotel);
+        return reply.status(204).send();
+      } catch (error) {
+        return reply.status(400).send(error);
+      }
+    }
+  );
 };
 
 export default hotelRoutes;
