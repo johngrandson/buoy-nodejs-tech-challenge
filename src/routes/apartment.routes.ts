@@ -80,6 +80,63 @@ const apartmentRoutes: FastifyPluginAsync = async fastify => {
       }
     }
   );
+
+  fastify.put<{ Params: typeof ApartmentParamsSchema._type; Body: ApartmentInput }>(
+    '/:id',
+    {
+      schema: {
+        description: 'Update apartment by ID',
+        tags: ['Apartments'],
+        params: fromZodSchema(ApartmentParamsSchema),
+        body: fromZodSchema(ApartmentSchema),
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id } = ApartmentParamsSchema.parse(request.params);
+        const data = ApartmentSchema.parse(request.body);
+        
+        const apartment = await fastify.em.findOne(Apartment, { id });
+        
+        if (!apartment) {
+          return reply.status(404).send({ message: 'Apartment not found' });
+        }
+        
+        fastify.em.assign(apartment, data);
+        await fastify.em.persistAndFlush(apartment);
+        
+        return apartment;
+      } catch (error) {
+        return reply.status(400).send(error);
+      }
+    }
+  );
+
+  fastify.delete(
+    '/:id',
+    {
+      schema: {
+        description: 'Delete apartment by ID',
+        tags: ['Apartments'],
+        params: fromZodSchema(ApartmentParamsSchema),
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id } = ApartmentParamsSchema.parse(request.params);
+        const apartment = await fastify.em.findOne(Apartment, { id });
+        
+        if (!apartment) {
+          return reply.status(404).send({ message: 'Apartment not found' });
+        }
+        
+        await fastify.em.removeAndFlush(apartment);
+        return reply.status(204).send();
+      } catch (error) {
+        return reply.status(400).send(error);
+      }
+    }
+  );
 };
 
 export default apartmentRoutes;
