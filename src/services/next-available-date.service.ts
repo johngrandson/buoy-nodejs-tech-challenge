@@ -26,17 +26,21 @@ export class NextAvailableDateService {
     fromDate: Date
   ): Promise<NextAvailableDateResult> {
     const accommodation = await this.em.findOne(Accommodation, { id: accommodationId });
-    
+
     if (!accommodation) {
       throw new Error('Accommodation not found');
     }
 
     const requestedDateStr = fromDate.toISOString().split('T')[0];
-    
+
     if (accommodation.type === 'hotel') {
       return this.findNextAvailableDateForHotel(accommodation as Hotel, fromDate, requestedDateStr);
     } else {
-      return this.findNextAvailableDateForApartment(accommodation as Apartment, fromDate, requestedDateStr);
+      return this.findNextAvailableDateForApartment(
+        accommodation as Apartment,
+        fromDate,
+        requestedDateStr
+      );
     }
   }
 
@@ -150,7 +154,7 @@ export class NextAvailableDateService {
   }> {
     const requestedDate = new Date(date);
     requestedDate.setHours(0, 0, 0, 0);
-    
+
     const nextDay = new Date(date);
     nextDay.setDate(nextDay.getDate() + 1);
     nextDay.setHours(0, 0, 0, 0);
@@ -188,7 +192,7 @@ export class NextAvailableDateService {
   }> {
     const requestedDate = new Date(date);
     requestedDate.setHours(0, 0, 0, 0);
-    
+
     const nextDay = new Date(date);
     nextDay.setDate(nextDay.getDate() + 1);
     nextDay.setHours(0, 0, 0, 0);

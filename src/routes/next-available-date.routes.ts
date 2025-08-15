@@ -46,7 +46,7 @@ export default async function nextAvailableDateRoutes(fastify: FastifyInstance) 
         const { from } = nextAvailableDateQuerySchema.parse(request.query);
 
         const fromDate = new Date(from);
-        
+
         // Validate the date
         if (isNaN(fromDate.getTime())) {
           return reply.status(400).send({ message: 'Invalid date format' });
@@ -60,7 +60,7 @@ export default async function nextAvailableDateRoutes(fastify: FastifyInstance) 
         }
 
         const result = await nextAvailableDateService.findNextAvailableDate(id, fromDate);
-        
+
         return reply.status(200).send(result);
       } catch (error) {
         if (error instanceof Error) {
@@ -71,7 +71,7 @@ export default async function nextAvailableDateRoutes(fastify: FastifyInstance) 
             return reply.status(400).send({ message: error.message });
           }
         }
-        
+
         fastify.log.error(error);
         return reply.status(500).send({ message: 'Internal server error' });
       }

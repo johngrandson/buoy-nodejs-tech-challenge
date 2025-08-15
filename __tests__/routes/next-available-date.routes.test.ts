@@ -240,7 +240,7 @@ describe('Next Available Date Routes', () => {
       (app.em.find as jest.Mock).mockResolvedValue([]);
 
       const testDate = getFutureDate(1); // Tomorrow
-      
+
       const response = await app.inject({
         method: 'GET',
         url: `/accommodations/2/next-available-date?from=${testDate}`,

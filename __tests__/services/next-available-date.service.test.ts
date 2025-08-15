@@ -22,9 +22,9 @@ describe('NextAvailableDateService', () => {
     it('should throw error when accommodation not found', async () => {
       mockEm.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.findNextAvailableDate(999, new Date('2025-08-15'))
-      ).rejects.toThrow('Accommodation not found');
+      await expect(service.findNextAvailableDate(999, new Date('2025-08-15'))).rejects.toThrow(
+        'Accommodation not found'
+      );
     });
 
     describe('Hotel scenarios', () => {
@@ -108,7 +108,7 @@ describe('NextAvailableDateService', () => {
         ];
 
         // First call (Aug 15): 3 bookings = full
-        // Second call (Aug 16): 3 bookings = full  
+        // Second call (Aug 16): 3 bookings = full
         // Third call (Aug 17): 3 bookings = full
         // Fourth call (Aug 18): 1 booking = available
         // Fifth call (get conflicts for Aug 15): 3 bookings
@@ -264,9 +264,9 @@ describe('NextAvailableDateService', () => {
 
         mockEm.find.mockResolvedValue([mockBooking] as Booking[]);
 
-        await expect(
-          service.findNextAvailableDate(1, new Date('2025-08-15'))
-        ).rejects.toThrow('No available date found within 365 days');
+        await expect(service.findNextAvailableDate(1, new Date('2025-08-15'))).rejects.toThrow(
+          'No available date found within 365 days'
+        );
       });
     });
 
