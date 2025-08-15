@@ -8,23 +8,23 @@ dotenv.config();
 const envSchema = z.object({
   // Node Environment
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  
+
   // Server Configuration
   PORT: z.coerce.number().int().min(1).max(65535).default(8006),
   HOST: z.string().default('0.0.0.0'),
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
   API_RATE_LIMIT: z.coerce.number().int().min(1).default(100),
-  
+
   // Database Configuration
   DB_HOST: z.string().min(1).default('localhost'),
   DB_PORT: z.coerce.number().int().min(1).max(65535).default(5432),
   DB_NAME: z.string().min(1).default('accommodation_booking'),
   DB_USER: z.string().min(1).default('postgres'),
   DB_PASSWORD: z.string().min(1).default('postgres'),
-  
+
   // SSL/Security Configuration (optional)
   DB_SSL: z.coerce.boolean().default(false),
-  
+
   // API Configuration
   API_PREFIX: z.string().default('/api/v1'),
   SWAGGER_ENABLED: z.coerce.boolean().default(true),
@@ -43,10 +43,10 @@ const parseEnv = (): EnvConfig => {
         const path = err.path.join('.');
         return `${path}: ${err.message}`;
       });
-      
+
       console.error('❌ Environment validation failed:');
       missingVars.forEach(err => console.error(`  - ${err}`));
-      
+
       if (process.env.NODE_ENV === 'production') {
         process.exit(1);
       } else {

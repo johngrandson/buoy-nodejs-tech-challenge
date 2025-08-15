@@ -18,5 +18,6 @@ module.exports = {
     '^@migrations/(.*)$': '<rootDir>/src/migrations/$1',
     '^@config/(.*)$': '<rootDir>/src/config/$1',
     '^@types/(.*)$': '<rootDir>/src/types/$1',
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
   },
 };

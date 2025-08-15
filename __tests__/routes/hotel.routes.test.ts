@@ -246,7 +246,9 @@ describe('Hotel Routes', () => {
       };
 
       (app.em.findOne as jest.Mock).mockResolvedValue(existingHotel);
-      (app.em.assign as jest.Mock).mockImplementation((entity, data) => Object.assign(entity, data));
+      (app.em.assign as jest.Mock).mockImplementation((entity, data) =>
+        Object.assign(entity, data)
+      );
       (app.em.persistAndFlush as jest.Mock).mockResolvedValue(undefined);
 
       const response = await app.inject({

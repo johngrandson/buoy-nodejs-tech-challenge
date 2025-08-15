@@ -24,8 +24,8 @@ describe('BookingValidationService', () => {
           id: 1,
           startDate: new Date('2024-01-01'),
           endDate: new Date('2024-01-05'),
-          accommodation: { id: 1 }
-        }
+          accommodation: { id: 1 },
+        },
       ] as Booking[];
 
       mockEm.find.mockResolvedValue(existingBookings);
@@ -47,8 +47,8 @@ describe('BookingValidationService', () => {
           id: 1,
           startDate: new Date('2024-01-01'),
           endDate: new Date('2024-01-15'),
-          accommodation: { id: 1 }
-        }
+          accommodation: { id: 1 },
+        },
       ] as Booking[];
 
       mockEm.find.mockResolvedValue(existingBookings);
@@ -71,8 +71,8 @@ describe('BookingValidationService', () => {
           id: 1,
           startDate: new Date('2024-01-01'),
           endDate: new Date('2024-01-15'),
-          accommodation: { id: 1 }
-        }
+          accommodation: { id: 1 },
+        },
       ] as Booking[];
 
       mockEm.find.mockResolvedValue(existingBookings);
@@ -96,14 +96,14 @@ describe('BookingValidationService', () => {
           id: 1,
           startDate: new Date('2024-01-01'),
           endDate: new Date('2024-01-15'),
-          accommodation: { id: 1 }
+          accommodation: { id: 1 },
         },
         {
           id: 2,
           startDate: new Date('2024-01-01'),
           endDate: new Date('2024-01-15'),
-          accommodation: { id: 1 }
-        }
+          accommodation: { id: 1 },
+        },
       ] as Booking[];
 
       mockEm.find.mockResolvedValue(existingBookings);
@@ -126,8 +126,8 @@ describe('BookingValidationService', () => {
           id: 2,
           startDate: new Date('2024-01-01'),
           endDate: new Date('2024-01-15'),
-          accommodation: { id: 1 }
-        }
+          accommodation: { id: 1 },
+        },
       ] as Booking[];
 
       mockEm.find.mockResolvedValue(existingBookings);
@@ -141,13 +141,10 @@ describe('BookingValidationService', () => {
       );
 
       expect(result.allowed).toBe(false);
-      expect(mockEm.find).toHaveBeenCalledWith(
-        Booking,
-        {
-          accommodation: { id: 1 },
-          id: { $ne: 1 }
-        }
-      );
+      expect(mockEm.find).toHaveBeenCalledWith(Booking, {
+        accommodation: { id: 1 },
+        id: { $ne: 1 },
+      });
     });
   });
 
@@ -175,8 +172,9 @@ describe('BookingValidationService', () => {
     it('should throw error for accommodation not found', async () => {
       mockEm.findOne.mockResolvedValue(null);
 
-      await expect(service.determineAccommodationType(999))
-        .rejects.toThrow('Accommodation not found');
+      await expect(service.determineAccommodationType(999)).rejects.toThrow(
+        'Accommodation not found'
+      );
     });
   });
 
@@ -185,10 +183,10 @@ describe('BookingValidationService', () => {
       mockEm.findOne.mockResolvedValue(null);
 
       const service = new BookingValidationService(mockEm);
-      
-      await expect(
-        service.validateBooking(1, 'hotel', new Date(), new Date())
-      ).rejects.toThrow('Hotel not found');
+
+      await expect(service.validateBooking(1, 'hotel', new Date(), new Date())).rejects.toThrow(
+        'Hotel not found'
+      );
     });
 
     it('should throw error for unsupported accommodation type', async () => {
