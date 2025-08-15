@@ -84,6 +84,63 @@ const accommodationRoutes: FastifyPluginAsync = async fastify => {
       }
     }
   );
+
+  fastify.put<{ Params: typeof AccommodationParamsSchema._type; Body: AccommodationInput }>(
+    '/:id',
+    {
+      schema: {
+        description: 'Update accommodation by ID',
+        tags: ['Accommodations'],
+        params: fromZodSchema(AccommodationParamsSchema),
+        body: fromZodSchema(AccommodationSchema),
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id } = AccommodationParamsSchema.parse(request.params);
+        const data = AccommodationSchema.parse(request.body);
+        
+        const accommodation = await fastify.em.findOne(Accommodation, { id });
+        
+        if (!accommodation) {
+          return reply.status(404).send({ message: 'Accommodation not found' });
+        }
+        
+        fastify.em.assign(accommodation, data);
+        await fastify.em.persistAndFlush(accommodation);
+        
+        return accommodation;
+      } catch (error) {
+        return reply.status(400).send(error);
+      }
+    }
+  );
+
+  fastify.delete(
+    '/:id',
+    {
+      schema: {
+        description: 'Delete accommodation by ID',
+        tags: ['Accommodations'],
+        params: fromZodSchema(AccommodationParamsSchema),
+      },
+    },
+    async (request, reply) => {
+      try {
+        const { id } = AccommodationParamsSchema.parse(request.params);
+        const accommodation = await fastify.em.findOne(Accommodation, { id });
+        
+        if (!accommodation) {
+          return reply.status(404).send({ message: 'Accommodation not found' });
+        }
+        
+        await fastify.em.removeAndFlush(accommodation);
+        return reply.status(204).send();
+      } catch (error) {
+        return reply.status(400).send(error);
+      }
+    }
+  );
 };
 
 export default accommodationRoutes;
