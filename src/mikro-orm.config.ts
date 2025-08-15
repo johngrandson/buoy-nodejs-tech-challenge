@@ -5,20 +5,23 @@ import { Accommodation } from './entities/accommodation.entity';
 import { Booking } from './entities/booking.entity';
 import { Hotel } from './entities/hotel.entity';
 import { Apartment } from './entities/apartment.entity';
+import { env, isDevelopment } from './config/env.config';
 
 const mikroOrmConfig: Options<PostgreSqlDriver> = {
   entities: [Accommodation, Booking, Hotel, Apartment],
-  dbName: process.env.DB_NAME || 'accommodation_booking',
+  dbName: env.DB_NAME,
   type: 'postgresql',
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT) || 5432,
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
+  host: env.DB_HOST,
+  port: env.DB_PORT,
+  user: env.DB_USER,
+  password: env.DB_PASSWORD,
   metadataProvider: TsMorphMetadataProvider,
   migrations: {
     path: './src/migrations',
     disableForeignKeys: false,
   },
+  debug: isDevelopment(),
+  allowGlobalContext: isDevelopment(),
 };
 
 export default mikroOrmConfig;
