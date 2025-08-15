@@ -4,6 +4,7 @@ import mikroOrmConfig from './mikro-orm.config';
 import bookingRoutes from './routes/booking.routes';
 import hotelRoutes from './routes/hotel.routes';
 import apartmentRoutes from './routes/apartment.routes';
+import nextAvailableDateRoutes from './routes/next-available-date.routes';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import cors from '@fastify/cors';
@@ -43,6 +44,7 @@ async function registerSwagger() {
         { name: 'Bookings', description: 'Booking management endpoints' },
         { name: 'Hotels', description: 'Hotel management endpoints' },
         { name: 'Apartments', description: 'Apartment management endpoints' },
+        { name: 'Accommodations', description: 'Accommodation availability endpoints' },
       ],
     },
   });
@@ -87,6 +89,7 @@ const start = async () => {
     server.register(bookingRoutes, { prefix: `${prefix}/bookings` });
     server.register(hotelRoutes, { prefix: `${prefix}/hotels` });
     server.register(apartmentRoutes, { prefix: `${prefix}/apartments` });
+    server.register(nextAvailableDateRoutes, { prefix: `${prefix}/accommodations` });
 
     await server.listen({
       port: env.PORT,
