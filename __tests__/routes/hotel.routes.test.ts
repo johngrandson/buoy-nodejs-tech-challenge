@@ -14,6 +14,8 @@ describe('Hotel Routes', () => {
       findOne: jest.fn(),
       create: jest.fn(),
       persistAndFlush: jest.fn(),
+      assign: jest.fn(),
+      removeAndFlush: jest.fn(),
     } as any;
 
     app.decorate('em', mockEm);
@@ -219,6 +221,113 @@ describe('Hotel Routes', () => {
       });
 
       expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('PUT /hotels/:id', () => {
+    it('should update a hotel by id', async () => {
+      const existingHotel = {
+        id: 1,
+        name: 'Old Hotel',
+        price: 100,
+        location: 'Old City',
+        numberOfRooms: 50,
+        starRating: 3,
+      };
+
+      const updateData = {
+        name: 'Updated Hotel',
+        description: 'An updated hotel',
+        price: 150,
+        location: 'Updated City',
+        numberOfRooms: 75,
+        starRating: 4,
+        amenities: ['WiFi', 'Pool'],
+      };
+
+      (app.em.findOne as jest.Mock).mockResolvedValue(existingHotel);
+      (app.em.assign as jest.Mock).mockImplementation((entity, data) => Object.assign(entity, data));
+      (app.em.persistAndFlush as jest.Mock).mockResolvedValue(undefined);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/hotels/1',
+        payload: updateData,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(app.em.findOne).toHaveBeenCalledWith(expect.anything(), { id: 1 });
+      expect(app.em.assign).toHaveBeenCalledWith(existingHotel, updateData);
+      expect(app.em.persistAndFlush).toHaveBeenCalledWith(existingHotel);
+    });
+
+    it('should return 404 when updating non-existent hotel', async () => {
+      (app.em.findOne as jest.Mock).mockResolvedValue(null);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/hotels/999',
+        payload: {
+          name: 'Updated Hotel',
+          price: 150,
+          location: 'Updated City',
+          numberOfRooms: 75,
+          starRating: 4,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.body)).toEqual({ message: 'Hotel not found' });
+    });
+
+    it('should return 400 for invalid update data', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/hotels/1',
+        payload: {
+          name: '',
+          // Invalid data
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('DELETE /hotels/:id', () => {
+    it('should delete a hotel by id', async () => {
+      const existingHotel = {
+        id: 1,
+        name: 'Hotel to Delete',
+        price: 100,
+        location: 'City',
+        numberOfRooms: 50,
+        starRating: 3,
+      };
+
+      (app.em.findOne as jest.Mock).mockResolvedValue(existingHotel);
+      (app.em.removeAndFlush as jest.Mock).mockResolvedValue(undefined);
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/hotels/1',
+      });
+
+      expect(response.statusCode).toBe(204);
+      expect(app.em.findOne).toHaveBeenCalledWith(expect.anything(), { id: 1 });
+      expect(app.em.removeAndFlush).toHaveBeenCalledWith(existingHotel);
+    });
+
+    it('should return 404 when deleting non-existent hotel', async () => {
+      (app.em.findOne as jest.Mock).mockResolvedValue(null);
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/hotels/999',
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.body)).toEqual({ message: 'Hotel not found' });
     });
   });
 });
