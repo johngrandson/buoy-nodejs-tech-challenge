@@ -14,6 +14,8 @@ describe('Apartment Routes', () => {
       findOne: jest.fn(),
       create: jest.fn(),
       persistAndFlush: jest.fn(),
+      assign: jest.fn(),
+      removeAndFlush: jest.fn(),
     } as any;
 
     app.decorate('em', mockEm);
@@ -226,6 +228,119 @@ describe('Apartment Routes', () => {
       });
 
       expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('PUT /apartments/:id', () => {
+    it('should update an apartment by id', async () => {
+      const existingApartment = {
+        id: 1,
+        name: 'Old Apartment',
+        price: 80,
+        location: 'Old District',
+        numberOfBedrooms: 2,
+        numberOfBathrooms: 1,
+        squareMeters: 65,
+      };
+
+      const updateData = {
+        name: 'Updated Apartment',
+        description: 'An updated apartment',
+        price: 120,
+        location: 'Updated District',
+        numberOfBedrooms: 3,
+        numberOfBathrooms: 2,
+        squareMeters: 100,
+        floor: 5,
+        hasElevator: true,
+        amenities: ['WiFi', 'Parking', 'Balcony'],
+      };
+
+      (app.em.findOne as jest.Mock).mockResolvedValue(existingApartment);
+      (app.em.assign as jest.Mock).mockImplementation((entity, data) => Object.assign(entity, data));
+      (app.em.persistAndFlush as jest.Mock).mockResolvedValue(undefined);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/apartments/1',
+        payload: updateData,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(app.em.findOne).toHaveBeenCalledWith(expect.anything(), { id: 1 });
+      expect(app.em.assign).toHaveBeenCalledWith(existingApartment, updateData);
+      expect(app.em.persistAndFlush).toHaveBeenCalledWith(existingApartment);
+    });
+
+    it('should return 404 when updating non-existent apartment', async () => {
+      (app.em.findOne as jest.Mock).mockResolvedValue(null);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/apartments/999',
+        payload: {
+          name: 'Updated Apartment',
+          price: 120,
+          location: 'Updated District',
+          numberOfBedrooms: 3,
+          numberOfBathrooms: 2,
+          squareMeters: 100,
+        },
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.body)).toEqual({ message: 'Apartment not found' });
+    });
+
+    it('should return 400 for invalid update data', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/apartments/1',
+        payload: {
+          name: '',
+          // Invalid data
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('DELETE /apartments/:id', () => {
+    it('should delete an apartment by id', async () => {
+      const existingApartment = {
+        id: 1,
+        name: 'Apartment to Delete',
+        price: 80,
+        location: 'District',
+        numberOfBedrooms: 2,
+        numberOfBathrooms: 1,
+        squareMeters: 65,
+      };
+
+      (app.em.findOne as jest.Mock).mockResolvedValue(existingApartment);
+      (app.em.removeAndFlush as jest.Mock).mockResolvedValue(undefined);
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/apartments/1',
+      });
+
+      expect(response.statusCode).toBe(204);
+      expect(app.em.findOne).toHaveBeenCalledWith(expect.anything(), { id: 1 });
+      expect(app.em.removeAndFlush).toHaveBeenCalledWith(existingApartment);
+    });
+
+    it('should return 404 when deleting non-existent apartment', async () => {
+      (app.em.findOne as jest.Mock).mockResolvedValue(null);
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/apartments/999',
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(JSON.parse(response.body)).toEqual({ message: 'Apartment not found' });
     });
   });
 });
