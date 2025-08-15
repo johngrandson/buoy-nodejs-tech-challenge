@@ -18,10 +18,14 @@ const hotelRoutes: FastifyPluginAsync = async fastify => {
       const { page, limit } = PaginationQuerySchema.parse(request.query);
       const offset = (page - 1) * limit;
 
-      const [hotels, total] = await fastify.em.findAndCount(Hotel, {}, {
-        limit,
-        offset,
-      });
+      const [hotels, total] = await fastify.em.findAndCount(
+        Hotel,
+        {},
+        {
+          limit,
+          offset,
+        }
+      );
 
       const totalPages = Math.ceil(total / limit);
 
@@ -72,7 +76,7 @@ const hotelRoutes: FastifyPluginAsync = async fastify => {
     async (request, reply) => {
       try {
         const data = HotelSchema.parse(request.body);
-        const hotel = fastify.em.create(Hotel, data);
+        const hotel = fastify.em.create(Hotel, { ...data, type: 'hotel' });
         await fastify.em.persistAndFlush(hotel);
         return reply.status(201).send(hotel);
       } catch (error) {
@@ -95,16 +99,16 @@ const hotelRoutes: FastifyPluginAsync = async fastify => {
       try {
         const { id } = HotelParamsSchema.parse(request.params);
         const data = HotelSchema.parse(request.body);
-        
+
         const hotel = await fastify.em.findOne(Hotel, { id });
-        
+
         if (!hotel) {
           return reply.status(404).send({ message: 'Hotel not found' });
         }
-        
+
         fastify.em.assign(hotel, data);
         await fastify.em.persistAndFlush(hotel);
-        
+
         return hotel;
       } catch (error) {
         return reply.status(400).send(error);
@@ -125,11 +129,11 @@ const hotelRoutes: FastifyPluginAsync = async fastify => {
       try {
         const { id } = HotelParamsSchema.parse(request.params);
         const hotel = await fastify.em.findOne(Hotel, { id });
-        
+
         if (!hotel) {
           return reply.status(404).send({ message: 'Hotel not found' });
         }
-        
+
         await fastify.em.removeAndFlush(hotel);
         return reply.status(204).send();
       } catch (error) {

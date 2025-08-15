@@ -18,10 +18,14 @@ const apartmentRoutes: FastifyPluginAsync = async fastify => {
       const { page, limit } = PaginationQuerySchema.parse(request.query);
       const offset = (page - 1) * limit;
 
-      const [apartments, total] = await fastify.em.findAndCount(Apartment, {}, {
-        limit,
-        offset,
-      });
+      const [apartments, total] = await fastify.em.findAndCount(
+        Apartment,
+        {},
+        {
+          limit,
+          offset,
+        }
+      );
 
       const totalPages = Math.ceil(total / limit);
 
@@ -72,7 +76,7 @@ const apartmentRoutes: FastifyPluginAsync = async fastify => {
     async (request, reply) => {
       try {
         const data = ApartmentSchema.parse(request.body);
-        const apartment = fastify.em.create(Apartment, data);
+        const apartment = fastify.em.create(Apartment, { ...data, type: 'apartment' });
         await fastify.em.persistAndFlush(apartment);
         return reply.status(201).send(apartment);
       } catch (error) {
@@ -95,16 +99,16 @@ const apartmentRoutes: FastifyPluginAsync = async fastify => {
       try {
         const { id } = ApartmentParamsSchema.parse(request.params);
         const data = ApartmentSchema.parse(request.body);
-        
+
         const apartment = await fastify.em.findOne(Apartment, { id });
-        
+
         if (!apartment) {
           return reply.status(404).send({ message: 'Apartment not found' });
         }
-        
+
         fastify.em.assign(apartment, data);
         await fastify.em.persistAndFlush(apartment);
-        
+
         return apartment;
       } catch (error) {
         return reply.status(400).send(error);
@@ -125,11 +129,11 @@ const apartmentRoutes: FastifyPluginAsync = async fastify => {
       try {
         const { id } = ApartmentParamsSchema.parse(request.params);
         const apartment = await fastify.em.findOne(Apartment, { id });
-        
+
         if (!apartment) {
           return reply.status(404).send({ message: 'Apartment not found' });
         }
-        
+
         await fastify.em.removeAndFlush(apartment);
         return reply.status(204).send();
       } catch (error) {

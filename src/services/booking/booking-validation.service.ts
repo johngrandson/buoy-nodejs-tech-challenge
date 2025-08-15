@@ -1,7 +1,7 @@
 import { EntityManager } from '@mikro-orm/core';
 import { Booking } from '@entities/booking.entity';
 import { Hotel } from '@entities/hotel.entity';
-import { Apartment } from '@entities/apartment.entity';
+import { Accommodation } from '@entities/accommodation.entity';
 import { BookingStrategy, BookingValidationResult } from './strategies/booking-strategy.interface';
 import { ApartmentBookingStrategy } from './strategies/apartment-booking.strategy';
 import { HotelBookingStrategy } from './strategies/hotel-booking.strategy';
@@ -60,16 +60,13 @@ export class BookingValidationService {
   }
 
   async determineAccommodationType(accommodationId: number): Promise<AccommodationType> {
-    const hotel = await this.em.findOne(Hotel, { id: accommodationId });
-    if (hotel) {
-      return 'hotel';
+    // Now we can directly query the accommodation and check its type
+    const accommodation = await this.em.findOne(Accommodation, { id: accommodationId });
+
+    if (!accommodation) {
+      throw new Error('Accommodation not found');
     }
 
-    const apartment = await this.em.findOne(Apartment, { id: accommodationId });
-    if (apartment) {
-      return 'apartment';
-    }
-
-    throw new Error('Accommodation not found or unsupported type');
+    return accommodation.type;
   }
 }

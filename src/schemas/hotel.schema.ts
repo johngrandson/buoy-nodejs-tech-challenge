@@ -8,6 +8,7 @@ export const HotelSchema = z.object({
   numberOfRooms: z.number().int().positive(),
   starRating: z.number().int().min(1).max(5),
   amenities: z.array(z.string()).optional(),
+  type: z.literal('hotel').optional(), // Will be set automatically
 });
 
 export const HotelParamsSchema = z.object({

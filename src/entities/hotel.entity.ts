@@ -1,28 +1,18 @@
-import { Entity, Property, PrimaryKey } from '@mikro-orm/core';
+import { Entity, Property } from '@mikro-orm/core';
+import { Accommodation } from './accommodation.entity';
 
-@Entity()
-export class Hotel {
-  @PrimaryKey()
-  id!: number;
-
-  @Property()
-  name!: string;
-
-  @Property({ type: 'text', nullable: true })
-  description?: string;
-
-  @Property({ type: 'decimal' })
-  price!: number;
-
-  @Property()
-  location!: string;
-
+@Entity({
+  discriminatorValue: 'hotel',
+})
+export class Hotel extends Accommodation {
   @Property()
   numberOfRooms!: number;
 
   @Property()
   starRating!: number;
 
-  @Property({ type: 'json', nullable: true })
-  amenities?: string[];
+  constructor() {
+    super();
+    this.type = 'hotel';
+  }
 }
