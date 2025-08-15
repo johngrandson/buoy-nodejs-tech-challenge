@@ -1,5 +1,7 @@
 {
-  "namespaces": ["public"],
+  "namespaces": [
+    "public"
+  ],
   "name": "public",
   "tables": [
     {
@@ -50,14 +52,110 @@
           "primary": false,
           "nullable": false,
           "mappedType": "string"
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "enumItems": [
+            "hotel",
+            "apartment"
+          ],
+          "mappedType": "string"
+        },
+        "amenities": {
+          "name": "amenities",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "json"
+        },
+        "number_of_rooms": {
+          "name": "number_of_rooms",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
+        "star_rating": {
+          "name": "star_rating",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
+        "number_of_bedrooms": {
+          "name": "number_of_bedrooms",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
+        "number_of_bathrooms": {
+          "name": "number_of_bathrooms",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
+        "square_meters": {
+          "name": "square_meters",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
+        "floor": {
+          "name": "floor",
+          "type": "int",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
+        "has_elevator": {
+          "name": "has_elevator",
+          "type": "boolean",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "boolean"
         }
       },
       "name": "accommodation",
       "schema": "public",
       "indexes": [
         {
+          "columnNames": [
+            "type"
+          ],
+          "composite": false,
+          "keyName": "accommodation_type_index",
+          "primary": false,
+          "unique": false
+        },
+        {
           "keyName": "accommodation_pkey",
-          "columnNames": ["id"],
+          "columnNames": [
+            "id"
+          ],
           "composite": false,
           "primary": true,
           "unique": true
@@ -121,7 +219,9 @@
       "indexes": [
         {
           "keyName": "booking_pkey",
-          "columnNames": ["id"],
+          "columnNames": [
+            "id"
+          ],
           "composite": false,
           "primary": true,
           "unique": true
@@ -131,9 +231,13 @@
       "foreignKeys": {
         "booking_accommodation_id_foreign": {
           "constraintName": "booking_accommodation_id_foreign",
-          "columnNames": ["accommodation_id"],
+          "columnNames": [
+            "accommodation_id"
+          ],
           "localTableName": "public.booking",
-          "referencedColumnNames": ["id"],
+          "referencedColumnNames": [
+            "id"
+          ],
           "referencedTableName": "public.accommodation",
           "updateRule": "cascade"
         }
