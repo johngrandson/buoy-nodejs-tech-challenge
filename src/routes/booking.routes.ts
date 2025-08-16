@@ -10,6 +10,8 @@ import {
 import { PaginationQuerySchema, PaginationResponse } from '@schemas/pagination.schema';
 import { BookingValidationService } from '@/services/booking/booking-validation.service';
 import fromZodSchema from 'zod-to-json-schema';
+import { handleRouteError } from '@/utils/error-handler';
+import { paginate } from '@/utils/pagination';
 
 const bookingRoutes: FastifyPluginAsync = async fastify => {
   fastify.get<{ Querystring: typeof PaginationQuerySchema._type }>(
@@ -22,32 +24,10 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
       },
     },
     async (request): Promise<PaginationResponse<Booking>> => {
-      const { page, limit } = PaginationQuerySchema.parse(request.query);
-      const offset = (page - 1) * limit;
-
-      const [bookings, total] = await fastify.em.findAndCount(
-        Booking,
-        {},
-        {
-          limit,
-          offset,
-          populate: ['accommodation'],
-        }
-      );
-
-      const totalPages = Math.ceil(total / limit);
-
-      return {
-        data: bookings,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1,
-        },
-      };
+      const params = PaginationQuerySchema.parse(request.query);
+      return paginate<Booking>(fastify.em, Booking, params, {
+        populate: ['accommodation'],
+      });
     }
   );
 
@@ -119,7 +99,7 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
         await fastify.em.persistAndFlush(booking);
         return reply.status(201).send(booking);
       } catch (error) {
-        return reply.status(400).send(error);
+        handleRouteError(error, reply);
       }
     }
   );
@@ -181,7 +161,7 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
 
         return booking;
       } catch (error) {
-        return reply.status(400).send(error);
+        handleRouteError(error, reply);
       }
     }
   );
@@ -207,7 +187,7 @@ const bookingRoutes: FastifyPluginAsync = async fastify => {
         await fastify.em.removeAndFlush(booking);
         return reply.status(204).send();
       } catch (error) {
-        return reply.status(400).send(error);
+        handleRouteError(error, reply);
       }
     }
   );

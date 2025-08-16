@@ -80,12 +80,24 @@ export const getServerUrl = () => {
   return `${protocol}://${host}:${env.PORT}`;
 };
 
-// Log current configuration (safe for production)
+// Get configuration summary (safe for production)
+export const getConfigurationSummary = () => {
+  return {
+    environment: env.NODE_ENV,
+    server: getServerUrl(),
+    database: `${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`,
+    logLevel: env.LOG_LEVEL,
+    swagger: env.SWAGGER_ENABLED ? 'enabled' : 'disabled',
+  };
+};
+
+// Log current configuration (for backward compatibility)
 export const logConfiguration = () => {
+  const config = getConfigurationSummary();
   console.log('🔧 Configuration loaded:');
-  console.log(`  Environment: ${env.NODE_ENV}`);
-  console.log(`  Server: ${getServerUrl()}`);
-  console.log(`  Database: ${env.DB_HOST}:${env.DB_PORT}/${env.DB_NAME}`);
-  console.log(`  Log Level: ${env.LOG_LEVEL}`);
-  console.log(`  Swagger: ${env.SWAGGER_ENABLED ? 'enabled' : 'disabled'}`);
+  console.log(`  Environment: ${config.environment}`);
+  console.log(`  Server: ${config.server}`);
+  console.log(`  Database: ${config.database}`);
+  console.log(`  Log Level: ${config.logLevel}`);
+  console.log(`  Swagger: ${config.swagger}`);
 };

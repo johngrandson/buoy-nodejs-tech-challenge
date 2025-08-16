@@ -1,7 +1,5 @@
 {
-  "namespaces": [
-    "public"
-  ],
+  "namespaces": ["public"],
   "name": "public",
   "tables": [
     {
@@ -60,10 +58,7 @@
           "autoincrement": false,
           "primary": false,
           "nullable": false,
-          "enumItems": [
-            "hotel",
-            "apartment"
-          ],
+          "enumItems": ["hotel", "apartment"],
           "mappedType": "string"
         },
         "amenities": {
@@ -143,9 +138,7 @@
       "schema": "public",
       "indexes": [
         {
-          "columnNames": [
-            "type"
-          ],
+          "columnNames": ["type"],
           "composite": false,
           "keyName": "accommodation_type_index",
           "primary": false,
@@ -153,9 +146,7 @@
         },
         {
           "keyName": "accommodation_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -219,9 +210,7 @@
       "indexes": [
         {
           "keyName": "booking_pkey",
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "primary": true,
           "unique": true
@@ -231,13 +220,9 @@
       "foreignKeys": {
         "booking_accommodation_id_foreign": {
           "constraintName": "booking_accommodation_id_foreign",
-          "columnNames": [
-            "accommodation_id"
-          ],
+          "columnNames": ["accommodation_id"],
           "localTableName": "public.booking",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.accommodation",
           "updateRule": "cascade"
         }

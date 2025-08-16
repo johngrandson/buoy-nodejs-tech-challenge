@@ -3,6 +3,8 @@ import { Apartment } from '@entities/apartment.entity';
 import { ApartmentSchema, ApartmentInput, ApartmentParamsSchema } from '@schemas/apartment.schema';
 import { PaginationQuerySchema, PaginationResponse } from '@schemas/pagination.schema';
 import fromZodSchema from 'zod-to-json-schema';
+import { handleRouteError } from '@/utils/error-handler';
+import { paginate } from '@/utils/pagination';
 
 const apartmentRoutes: FastifyPluginAsync = async fastify => {
   fastify.get<{ Querystring: typeof PaginationQuerySchema._type }>(
@@ -15,31 +17,8 @@ const apartmentRoutes: FastifyPluginAsync = async fastify => {
       },
     },
     async (request): Promise<PaginationResponse<Apartment>> => {
-      const { page, limit } = PaginationQuerySchema.parse(request.query);
-      const offset = (page - 1) * limit;
-
-      const [apartments, total] = await fastify.em.findAndCount(
-        Apartment,
-        {},
-        {
-          limit,
-          offset,
-        }
-      );
-
-      const totalPages = Math.ceil(total / limit);
-
-      return {
-        data: apartments,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1,
-        },
-      };
+      const params = PaginationQuerySchema.parse(request.query);
+      return paginate<Apartment>(fastify.em, Apartment, params);
     }
   );
 
@@ -80,7 +59,7 @@ const apartmentRoutes: FastifyPluginAsync = async fastify => {
         await fastify.em.persistAndFlush(apartment);
         return reply.status(201).send(apartment);
       } catch (error) {
-        return reply.status(400).send(error);
+        handleRouteError(error, reply);
       }
     }
   );
@@ -111,7 +90,7 @@ const apartmentRoutes: FastifyPluginAsync = async fastify => {
 
         return apartment;
       } catch (error) {
-        return reply.status(400).send(error);
+        handleRouteError(error, reply);
       }
     }
   );
@@ -137,7 +116,7 @@ const apartmentRoutes: FastifyPluginAsync = async fastify => {
         await fastify.em.removeAndFlush(apartment);
         return reply.status(204).send();
       } catch (error) {
-        return reply.status(400).send(error);
+        handleRouteError(error, reply);
       }
     }
   );

@@ -49,12 +49,6 @@ export class NextAvailableDateService {
     fromDate: Date,
     requestedDateStr: string
   ): Promise<NextAvailableDateResult> {
-    // Get hotel details to know room capacity
-    const hotelDetails = await this.em.findOne(Hotel, { id: hotel.id });
-    if (!hotelDetails) {
-      throw new Error('Hotel details not found');
-    }
-
     let currentDate = new Date(fromDate);
     const maxDaysToCheck = 365; // Limit search to 1 year
     let daysChecked = 0;
@@ -63,7 +57,7 @@ export class NextAvailableDateService {
       const { available, conflictingBookings } = await this.checkHotelAvailability(
         hotel.id,
         currentDate,
-        hotelDetails.numberOfRooms
+        hotel.numberOfRooms
       );
 
       if (available) {
@@ -76,7 +70,7 @@ export class NextAvailableDateService {
           const { conflictingBookings: requestedConflicts } = await this.checkHotelAvailability(
             hotel.id,
             fromDate,
-            hotelDetails.numberOfRooms
+            hotel.numberOfRooms
           );
           requestedDateConflicts = requestedConflicts;
         }

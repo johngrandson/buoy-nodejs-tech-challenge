@@ -28,7 +28,7 @@ export class BookingValidationService {
     accommodationId: number,
     excludeBookingId?: number
   ): Promise<Booking[]> {
-    const conditions: any = {
+    const conditions: Record<string, unknown> = {
       accommodation: { id: accommodationId },
     };
 

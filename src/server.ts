@@ -8,7 +8,7 @@ import nextAvailableDateRoutes from './routes/next-available-date.routes';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import cors from '@fastify/cors';
-import { env, getServerUrl, logConfiguration } from './config/env.config';
+import { env, getServerUrl, getConfigurationSummary } from './config/env.config';
 
 const server = fastify({
   logger: {
@@ -63,14 +63,15 @@ async function registerSwagger() {
 const start = async () => {
   try {
     // Log configuration for debugging
-    logConfiguration();
+    const config = getConfigurationSummary();
+    server.log.info({ config }, '🔧 Configuration loaded');
 
-    // await 1 second before starting the server
+    // Wait for database connections to be ready
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Register CORS to allow access from any origin
+    // Register CORS with environment-based configuration
     await server.register(cors, {
-      origin: true, // Allow all origins
+      origin: env.CORS_ORIGIN ? env.CORS_ORIGIN.split(',') : env.NODE_ENV === 'development',
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     });
@@ -84,7 +85,7 @@ const start = async () => {
     server.decorate('em', orm.em.fork());
 
     // Register routes with API prefix if configured
-    const prefix = env.API_PREFIX === '/api/v1' ? '' : env.API_PREFIX;
+    const prefix = env.API_PREFIX || '';
 
     server.register(bookingRoutes, { prefix: `${prefix}/bookings` });
     server.register(hotelRoutes, { prefix: `${prefix}/hotels` });
@@ -96,9 +97,9 @@ const start = async () => {
       host: env.HOST,
     });
 
-    console.log(`🚀 Server ready at ${getServerUrl()}`);
+    server.log.info(`🚀 Server ready at ${getServerUrl()}`);
     if (env.SWAGGER_ENABLED) {
-      console.log(`📚 API Documentation: ${getServerUrl()}/documentation`);
+      server.log.info(`📚 API Documentation: ${getServerUrl()}/documentation`);
     }
   } catch (err) {
     server.log.error(err);

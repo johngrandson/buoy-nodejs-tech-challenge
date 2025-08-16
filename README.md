@@ -54,25 +54,28 @@ The frontend needs to, given an accommodation's `id` and a `date`, retrieve the 
   - GET /accommodations/:id/next-available-date?from=YYYY-MM-DD endpoint returning accommodation details, requested/next available dates, availability status, and conflicting booking information when the requested date is unavailable. This provides complete context for the frontend to display availability and suggest alternatives.
 
 ## TECH CONTEXT
+
 ### Stack
 
 The main libraries are:
+
 - [Fastify](https://fastify.dev/docs/v4.29.x/)
 - [MikroOrm](https://mikro-orm.io/docs/5.9/quick-start)
 
 ### Docker Setup
+
 To set up the project using Docker Compose, follow these steps:
 
 1. Ensure you have Docker and Docker Compose installed on your machine.
 2. Build and start the Docker containers:
 
-  ```bash
-  docker-compose up --build
-  ```
+```bash
+docker-compose up --build
+```
 
 3. The application should now be running and accessible at `http://localhost:8006`.
 
-### Swagger 
+### Swagger
 
 ```
 http://localhost:8006/documentation
@@ -85,17 +88,20 @@ New migrations are applied every time the server is started.
 Migrations will be needed when an existing entity changes any of it's Properties, is deleted, or a new one is added.
 
 #### Migration creation
+
 1. Stop every running container: `docker compose down`
 2. In one terminal, run the postgres container `docker compose up postgres`
 3. In another terminal, run the following command: `docker-compose run --rm app npm run generate-migration`
 4. If there are changes in the schema, a new migration will be created under `src/migrations`
 
 #### Migration Up
+
 1. Stop every running container: `docker compose down`
 2. In one terminal, run the postgres container `docker compose up postgres`
 3. In another terminal, run the following command: `docker-compose run --rm app npm run migration:up`
 
 #### Migration Down
+
 1. Stop every running container: `docker compose down`
 2. In one terminal, run the postgres container `docker compose up postgres`
 3. In another terminal, run the following command: `docker-compose run --rm app npm run migration:down`
